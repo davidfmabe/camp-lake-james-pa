@@ -6,97 +6,23 @@
   <title>Camp Lake James PA</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f2efe6;
-      color: #172019;
-    }
-    main {
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 32px 20px 48px;
-    }
-    .eyebrow {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      opacity: .6;
-    }
-    h1 {
-      margin: 8px 0 4px;
-      font-size: 38px;
-      line-height: 1;
-    }
-    .subhead {
-      margin: 0 0 28px;
-      opacity: .7;
-    }
-    .panel {
-      background: white;
-      border: 2px solid #172019;
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 6px 6px 0 #172019;
-    }
-    label {
-      display: block;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-    textarea, select {
-      width: 100%;
-      font: inherit;
-      font-size: 17px;
-      border: 2px solid #172019;
-      border-radius: 12px;
-      padding: 13px;
-      background: #fff;
-    }
-    textarea {
-      min-height: 150px;
-      resize: vertical;
-    }
-    select {
-      margin-bottom: 18px;
-    }
-    .counter {
-      text-align: right;
-      font-size: 13px;
-      opacity: .6;
-      margin: 6px 2px 18px;
-    }
-    button {
-      width: 100%;
-      min-height: 58px;
-      border: 2px solid #172019;
-      border-radius: 14px;
-      background: #d84b35;
-      color: white;
-      font: inherit;
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: .05em;
-      cursor: pointer;
-      box-shadow: 4px 4px 0 #172019;
-    }
-    button:disabled {
-      opacity: .5;
-      cursor: wait;
-    }
-    #status {
-      min-height: 24px;
-      margin-top: 18px;
-      font-weight: 700;
-      text-align: center;
-    }
-    .fineprint {
-      margin-top: 24px;
-      font-size: 12px;
-      text-align: center;
-      opacity: .55;
-    }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f2efe6; color: #172019; }
+    main { max-width: 560px; margin: 0 auto; padding: 32px 20px 48px; }
+    h1 { margin: 8px 0 4px; font-size: 38px; line-height: 1; }
+    .subhead { margin: 0 0 28px; opacity: .7; }
+    .panel { background: white; border: 2px solid #172019; border-radius: 18px; padding: 20px; box-shadow: 6px 6px 0 #172019; }
+    label { display: block; font-weight: 800; margin-bottom: 8px; }
+    textarea, select, input[type="number"] { width: 100%; font: inherit; font-size: 17px; border: 2px solid #172019; border-radius: 12px; padding: 13px; background: #fff; }
+    textarea { min-height: 150px; resize: vertical; }
+    select { margin-bottom: 18px; }
+    .counter { text-align: right; font-size: 13px; opacity: .6; margin: 6px 2px 18px; }
+    .custom-delay { display: none; margin: -6px 0 18px; }
+    .custom-delay.visible { display: block; }
+    .custom-delay small { display: block; margin-top: 6px; opacity: .65; }
+    button { width: 100%; min-height: 58px; border: 2px solid #172019; border-radius: 14px; background: #d84b35; color: white; font: inherit; font-size: 20px; font-weight: 900; letter-spacing: .05em; cursor: pointer; box-shadow: 4px 4px 0 #172019; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #status { min-height: 24px; margin-top: 18px; font-weight: 700; text-align: center; }
+    .fineprint { margin-top: 24px; font-size: 12px; line-height: 1.45; text-align: center; opacity: .55; }
   </style>
 </head>
 <body>
@@ -107,7 +33,6 @@
     <div class="panel">
       <label for="text">Announcement</label>
       <textarea id="text" maxlength="500" placeholder="Attention Camp Lake James..."></textarea>
-
       <div class="counter"><span id="count">0</span> / 500</div>
 
       <label for="voice">Voice</label>
@@ -121,6 +46,22 @@
         <option value="DduhIyyKkOosbP8VefhP">Rock Concert</option>
         <option value="TxGi1N29NQoCaYD4fcU5">Mike</option>
       </select>
+
+      <label for="delay">When</label>
+      <select id="delay">
+        <option value="0" selected>Now</option>
+        <option value="30">30 seconds</option>
+        <option value="60">1 minute</option>
+        <option value="180">3 minutes</option>
+        <option value="300">5 minutes</option>
+        <option value="custom">Custom…</option>
+      </select>
+
+      <div class="custom-delay" id="customDelayWrap">
+        <label for="customDelay">Custom delay (minutes)</label>
+        <input id="customDelay" type="number" min="1" max="15" step="1" value="8">
+        <small>Choose 1–15 minutes.</small>
+      </div>
 
       <button id="broadcast">BROADCAST</button>
       <div id="status" aria-live="polite"></div>
@@ -138,19 +79,49 @@
 
     const text = document.getElementById("text");
     const voice = document.getElementById("voice");
+    const delay = document.getElementById("delay");
+    const customDelayWrap = document.getElementById("customDelayWrap");
+    const customDelay = document.getElementById("customDelay");
     const button = document.getElementById("broadcast");
     const status = document.getElementById("status");
     const count = document.getElementById("count");
 
-    text.addEventListener("input", () => {
-      count.textContent = text.value.length;
+    text.addEventListener("input", () => { count.textContent = text.value.length; });
+
+    delay.addEventListener("change", () => {
+      const show = delay.value === "custom";
+      customDelayWrap.classList.toggle("visible", show);
+      if (show) customDelay.focus();
     });
+
+    function getDelaySeconds() {
+      if (delay.value !== "custom") return Number(delay.value);
+      const minutes = Number(customDelay.value);
+      if (!Number.isFinite(minutes) || minutes < 1 || minutes > 15) {
+        throw new Error("Custom delay must be between 1 and 15 minutes.");
+      }
+      return Math.round(minutes * 60);
+    }
+
+    function confirmationMessage(seconds) {
+      if (seconds === 0) return "Queued. Broadcasting shortly.";
+      if (seconds < 60) return `Queued. Broadcasting in about ${seconds} seconds.`;
+      const minutes = Math.round(seconds / 60);
+      return `Queued. Broadcasting in about ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`;
+    }
 
     button.addEventListener("click", async () => {
       const message = text.value.trim();
-
       if (!message) {
         status.textContent = "You have to announce something.";
+        return;
+      }
+
+      let delaySeconds;
+      try {
+        delaySeconds = getDelaySeconds();
+      } catch (err) {
+        status.textContent = err.message;
         return;
       }
 
@@ -167,17 +138,15 @@
           },
           body: JSON.stringify({
             text: message,
-            voice_id: voice.value
+            voice_id: voice.value,
+            delay_seconds: delaySeconds
           })
         });
 
         const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Broadcast failed.");
 
-        if (!response.ok) {
-          throw new Error(result.error || "Broadcast failed.");
-        }
-
-        status.textContent = `Announcement #${result.id} entered the broadcast queue.`;
+        status.textContent = confirmationMessage(result.delay_seconds ?? delaySeconds);
         text.value = "";
         count.textContent = "0";
       } catch (err) {
